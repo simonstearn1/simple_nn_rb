@@ -8,6 +8,9 @@ module Fish
   class Layer < Array
   end
 
+  class Weights < Array
+  end
+
   class NNet
     include Math
 
@@ -94,7 +97,7 @@ module Fish
     end
 
     def training_set_initial_order
-      Layer.new(NUM_TRAINING_SETS) { |i| i }
+      Array.new(NUM_TRAINING_SETS) { |i| i }
     end
 
     # code..
@@ -128,11 +131,11 @@ module Fish
     end
 
     def create_hidden_weights
-      Layer.new(num_inputs).map { |hw| Layer.new(num_hidden_nodes, init_weight) }
+      Weights.new(num_inputs).map { |hw| Weights.new(num_hidden_nodes, init_weight) }
     end
 
     def create_output_weights
-      Layer.new(num_hidden_nodes).map { |ow| Layer.new(num_outputs, init_weight) }
+      Weights.new(num_hidden_nodes).map { |ow| Weights.new(num_outputs, init_weight) }
     end
 
     def forward_inputs(training_set)
