@@ -11,6 +11,8 @@ module Fish
   class NNet
     include Math
 
+    attr_accessor :inputs,:hidden_nodes,:outputs, :learning_rate, :epochs, :debug, :data, :expected
+
     # Constants..
     DEFAULT_NUM_INPUTS = 2
     DEFAULT_NUM_HIDDEN_NODES = 2
@@ -19,7 +21,6 @@ module Fish
     NUM_TRAINING_SETS = 4
     DEFAULT_NUM_EPOCHS = 100000
 
-    attr_accessor :inputs,:hidden_nodes,:outputs, :learning_rate, :epochs, :debug
     def initialize(h)
       h.each {|k,v| public_send("#{k}=",v)}
 
@@ -38,7 +39,7 @@ module Fish
 
       (1..num_epochs).each do |epoch|
         puts "Epoch: #{epoch}." if @debug
-        @training_set_order.shuffle!
+        @training_set_order.shuffle! # This is Stochastic Gradient Decent so randomise training set order
 
         @training_set_order.each do |training_set|
           forwards_prop(training_set)
@@ -85,11 +86,11 @@ module Fish
     end
 
     def training_inputs
-      [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]
+      @data ||= [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]
     end
 
     def training_outputs
-      [[0.0], [1.0], [1.0], [0.0]]
+      @expected ||= [[0.0], [1.0], [1.0], [0.0]]
     end
 
     def training_set_initial_order
@@ -155,21 +156,20 @@ module Fish
     end
 
     def forwards_prop(training_set)
-      progress("1")
+      progress("Forward Inputs")
       forward_inputs(training_set)
-      progress("2")
+      progress("Forward Outputs")
       forward_outputs
-      progress("3")
     end
 
-    def backwards_prop(training_set)
+    def backwards_outputs(training_set)
       delta_output = Array.new(num_outputs)
       delta_output.each_index do |idx|
         delta_output[idx] = (training_outputs[training_set][idx] - @output_layer[idx]) * dSigmoid(@output_layer[idx])
       end
+    end
 
-      progress("4")
-
+    def backwards_hidden(delta_output)
       delta_hidden = Array.new(num_hidden_nodes)
       delta_hidden.each_index do |h_idx|
         delta_hidden[h_idx] = 0.0
@@ -178,23 +178,36 @@ module Fish
         end
         delta_hidden[h_idx] = delta_hidden[h_idx] * dSigmoid(@hidden_layer[h_idx])
       end
+    end
 
-      progress("5")
-
+    def update_output(delta_output)
       delta_output.each_with_index do |d_o, idx|
         @output_layer_bias[idx] += delta_output[idx] * l_rate
         @hidden_layer.each_with_index do |hl, hl_idx|
           @output_weights[hl_idx][idx] += @hidden_layer[hl_idx] * d_o * l_rate
         end
       end
-      progress("6")
+    end
 
+    def update_hidden(delta_hidden, training_set)
       delta_hidden.each_index do |h_idx|
         @hidden_layer_bias[h_idx] += delta_hidden[h_idx] * l_rate
         (1..num_inputs).each do |i_idx|
           @hidden_weights[h_idx][i_idx - 1] += training_inputs[training_set][i_idx - 1] * delta_hidden[h_idx] * l_rate
         end
       end
+
+    end
+
+    def backwards_prop(training_set)
+      progress("Backwards from Outputs")
+      delta_output = backwards_outputs(training_set)
+      progress("Backwards to Hidden Layers")
+      delta_hidden = backwards_hidden(delta_output)
+
+      update_output(delta_output)
+      update_hidden(delta_hidden, training_set)
+
     end
 
     def progress(marker)
