@@ -10,7 +10,7 @@ module Fish
   class Layer < Array
   end
 
-  class Weights < Array
+  class Weight < Array
   end
 
   class Net
@@ -26,7 +26,7 @@ module Fish
     NUM_TRAINING_SETS = 4
     DEFAULT_NUM_EPOCHS = 100000
 
-    def initialize(h)
+    def initialize(h = {})
       h.each {|k,v| public_send("#{k}=",v)}
 
       @hidden_layer = create_hidden_layer
@@ -87,15 +87,15 @@ module Fish
     end
 
     def num_hidden_nodes
-      @hidden_nodes ||= DEFAULT_NUM_HIDDEN_NODES + offset
+      @hidden_nodes ||= DEFAULT_NUM_HIDDEN_NODES
     end
 
     def num_outputs
-      @outputs ||= DEFAULT_NUM_OUTPUTS + offset
+      @outputs ||= DEFAULT_NUM_OUTPUTS
     end
 
     def num_epochs
-      @epochs ||= DEFAULT_NUM_EPOCHS + offset
+      @epochs ||= DEFAULT_NUM_EPOCHS
     end
 
     def l_rate
@@ -149,11 +149,11 @@ module Fish
     end
 
     def create_hidden_weights
-      Weights.new(num_inputs).map { |hw| Weights.new(num_hidden_nodes, init_weight) }
+      Weight.new(num_inputs, Weight.new(num_hidden_nodes, init_weight))
     end
 
     def create_output_weights
-      Weights.new(num_hidden_nodes).map { |ow| Weights.new(num_outputs, init_weight) }
+      Weight.new(num_hidden_nodes, Weight.new(num_outputs, init_weight))
     end
 
     def forward_inputs(training_set)
