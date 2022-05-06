@@ -3,8 +3,10 @@
 #
 
 require 'debug'
+require_relative 'fish_exceptions'
 
 module Fish
+
   class Layer < Array
   end
 
@@ -14,7 +16,7 @@ module Fish
   class Net
     include Math
 
-    attr_accessor :inputs,:hidden_nodes,:outputs, :learning_rate, :epochs, :debug, :data, :expected
+    attr_accessor :inputs, :hidden_nodes, :outputs, :learning_rate, :epochs, :debug, :data, :expected
 
     # Constants..
     DEFAULT_NUM_INPUTS = 2
@@ -35,6 +37,8 @@ module Fish
       @output_weights = create_output_weights
 
       @training_set_order = training_set_initial_order
+
+      @trained = false
 
     end
 
@@ -59,6 +63,20 @@ module Fish
         puts "Final output weights: #{@output_weights}"
         puts "Final output biases: #{@output_layer_bias}"
       end
+
+      @trained = true
+
+    end
+
+
+    def predict(sample)
+      raise NetworkNotTrained unless @trained
+      raise SampleNotArray unless sample.is_a? Array
+      raise SampleWrongLength unless sample.length == num_inputs
+      raise SampleContainsNilValues if sample.include? nil
+
+
+
     end
 
     private
