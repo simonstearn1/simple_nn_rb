@@ -11,7 +11,7 @@ module Fish
   class Weights < Array
   end
 
-  class NNet
+  class Net
     include Math
 
     attr_accessor :inputs,:hidden_nodes,:outputs, :learning_rate, :epochs, :debug, :data, :expected
