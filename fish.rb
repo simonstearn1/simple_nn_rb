@@ -7,16 +7,72 @@ require_relative 'fish_exceptions'
 
 module Fish
 
-  class Layer < Array
+  class ActivationFunction < Array
+    include Math
+
+    def initialize(activation)
+
+      raise UnknownActivationFunction if activation.nil?
+      @activation_name = activation.to_s
+
+      case activation
+      when :sigmoid
+        @activation_function = ->(x) { sigmoid(x) }
+        @activation_derivative_function = ->(x) { d_sigmoid(x) }
+
+      when :tanh
+        @activation_function = ->(x) { tanh(x) }
+        @activation_derivative_function = ->(x) { d_tanh(x) }
+
+      when :relu
+        @activation_function = ->(x) { relu(x) }
+        @activation_derivative_function = ->(x) { d_relu(x) }
+      else
+        raise UnknownActivationFunction
+      end
+    end
+
+    def activation(x)
+      @activation_function.call(x)
+    end
+
+    def derivative(x)
+      @activation_derivative_function.call(x)
+    end
+
+    private
+
+    def sigmoid(x)
+      1.0 / (1.0 + exp(-x))
+    end
+
+    def d_sigmoid(x)
+      x * (1.0 - x)
+    end
+
+    def d_tanh(x)
+      1 - (tanh(x) ** 2)
+    end
+
+    def relu(x)
+      [0.0, x].max
+    end
+
+    def d_relu(x)
+      x > 0.0 ? 1.0 : 0.0
+    end
   end
 
   class Weight < Array
   end
 
+  class Layer < Array
+  end
+
   class Net
     include Math
 
-    attr_accessor :inputs, :hidden_nodes, :outputs, :learning_rate, :epochs, :debug, :data, :expected
+    attr_accessor :inputs, :hidden_nodes, :outputs, :learning_rate, :epochs, :debug, :data, :expected, :activation
 
     # Constants..
     DEFAULT_NUM_INPUTS = 2
@@ -40,6 +96,8 @@ module Fish
 
       @trained = false
 
+      @activation ||= :sigmoid
+      @activator = Fish::ActivationFunction.new(@activation)
     end
 
     def train
@@ -120,16 +178,6 @@ module Fish
       Array.new(NUM_TRAINING_SETS) { |i| i }
     end
 
-    # code..
-    #
-    def sigmoid(x)
-      1.0 / (1.0 + exp(-x))
-    end
-
-    def dSigmoid(x)
-      x * (1.0 - x)
-    end
-
     def init_weight
       rand
     end
@@ -164,7 +212,7 @@ module Fish
         data.each_with_index do |ti, t_idx|
           activation += ti * @hidden_weights[t_idx][hl_idx]
         end
-        @hidden_layer[hl_idx] = sigmoid(activation)
+        @hidden_layer[hl_idx] = @activator.activation(activation)
       end
     end
 
@@ -174,7 +222,7 @@ module Fish
         @hidden_layer.each_with_index do |hl, t_idx|
           activation += hl * @output_weights[t_idx][hl_idx]
         end
-        @output_layer[hl_idx] = sigmoid(activation)
+        @output_layer[hl_idx] = @activator.activation(activation)
       end
     end
 
@@ -188,7 +236,7 @@ module Fish
     def backwards_outputs(training_set)
       delta_output = Array.new(num_outputs)
       delta_output.each_index do |idx|
-        delta_output[idx] = (training_outputs[training_set][idx] - @output_layer[idx]) * dSigmoid(@output_layer[idx])
+        delta_output[idx] = (training_outputs[training_set][idx] - @output_layer[idx]) * @activator.derivative(@output_layer[idx])
       end
     end
 
@@ -199,7 +247,7 @@ module Fish
         delta_output.each_index do |o_idx|
           delta_hidden[h_idx] += delta_output[o_idx] * @output_weights[h_idx][o_idx]
         end
-        delta_hidden[h_idx] = delta_hidden[h_idx] * dSigmoid(@hidden_layer[h_idx])
+        delta_hidden[h_idx] = delta_hidden[h_idx] * @activator.derivative(@hidden_layer[h_idx])
       end
     end
 

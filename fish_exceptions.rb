@@ -32,5 +32,11 @@ module Fish
     end
   end
 
+  class UnknownActivationFunction < FishException
+    def initialize(msg="Supported activation functions are :sigmoid, :tanh and :relu.", exception_type="activation_invalid")
+      @exception_type = exception_type
+      super(msg)
+    end
+  end
 
 end
