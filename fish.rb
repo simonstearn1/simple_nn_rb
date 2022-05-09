@@ -75,8 +75,10 @@ module Fish
       raise SampleWrongLength unless sample.length == num_inputs
       raise SampleContainsNilValues if sample.include? nil
 
+      forward_inputs(sample)
+      forward_outputs
 
-
+      return @output_layer
     end
 
     private
@@ -156,10 +158,10 @@ module Fish
       Weight.new(num_hidden_nodes, Weight.new(num_outputs, init_weight))
     end
 
-    def forward_inputs(training_set)
+    def forward_inputs(data)
       @hidden_layer_bias.each_with_index do |hlb, hl_idx|
         activation = hlb
-        training_inputs[training_set].each_with_index do |ti, t_idx|
+        data.each_with_index do |ti, t_idx|
           activation += ti * @hidden_weights[t_idx][hl_idx]
         end
         @hidden_layer[hl_idx] = sigmoid(activation)
@@ -178,7 +180,7 @@ module Fish
 
     def forwards_prop(training_set)
       progress("Forward Inputs")
-      forward_inputs(training_set)
+      forward_inputs(training_inputs[training_set])
       progress("Forward Outputs")
       forward_outputs
     end
