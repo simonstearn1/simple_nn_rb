@@ -3,6 +3,8 @@ require 'byebug'
 require_relative '../fish.rb'
 
 class FishTest < Minitest::Test
+  include Math
+
   def self.prepare
     puts "Moving all private methods to public for testing.."
     Fish::Net.send(:public, *Fish::Net.private_instance_methods)
@@ -57,5 +59,25 @@ class FishTest < Minitest::Test
       assert fish.send(setup_method).is_a? Fish::Weight
     end
   end
+
+ def test_sigmoid_activation
+    func = Fish::ActivationFunction.new(:sigmoid)
+    assert func.activation(1.0) == (1.0 / (1.0 + exp(-1.0)))
+    assert func.derivative(1.0) == 0.0
+ end
+
+  def test_relu_activation
+    func = Fish::ActivationFunction.new(:relu)
+    assert func.activation(1.0) == 1.0
+    assert func.derivative(1.0) == 1.0
+ end
+
+  def test_tanh_activation
+    func = Fish::ActivationFunction.new(:tanh)
+    assert func.activation(1.0) == Math::tanh(1.0)
+    assert func.derivative(1.0) == (1 - (Math::tanh(1.0) ** 2))
+ end
+
+
 
 end
