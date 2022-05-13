@@ -7,7 +7,7 @@ require_relative 'fish_exceptions'
 
 module Fish
 
-  class ActivationFunction < Array
+  class ActivationFunction
     include Math
 
     def initialize(activation)
